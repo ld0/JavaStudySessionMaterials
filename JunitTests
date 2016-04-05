@@ -1,0 +1,221 @@
+JunitTests
+
+/** 
+ * Junit Tests
+ * L.. D.. fall 2015 
+ * SI Sessions CSCI 2120
+ */
+
+Import:
+
+import org.junit.Test;
+import static org.junit.Assert.*;
+
+import static org.junit.Assert.*;
+import org.junit.Test; 
+import org.junit.Before;
+import org.junit.After;
+
+Run in terminal:
+	java org.junit.runner.JUnitCore TestMyClass
+
+
+Junit Tests
+Here are some types
+  
+  		assertEquals(object1, object2);
+  			assertEquals(something.getString(), "hi");
+  			assertEquals(something.doesExist(), (Boolean)true);		// casting
+  			assertEquals(something.getYear(), (Integer)245874935);	// casting
+  
+  
+in my setup
+
+
+String name1 = "fido";
+Dog dog1 = new Dog(name1);
+
+in a test
+
+assertEquals(name1, dog1.getName());
+
+public class Dog{
+	private String name;
+
+	public Dog(String name){
+		this.name = name;
+	}
+
+
+	public String getName(){
+		return name;
+	}
+}  
+
+public class MyArray{
+
+	private int size;
+	
+	public MyArray(Object[] array){
+		size = array.length;
+	}
+
+	public boolean isEmpty(){
+		return (size == 0);
+	}
+
+}
+
+in a Junit setup, 
+
+	Integer[] arr = new Integer[0];
+	MyArray array1 = new MyArray(arr);
+	
+in a test
+	
+	assertEquals(array1.isEmpty(), (Boolean)true);
+	array1.add(5);
+	assertEquals(array1.isEmpty(), (Boolean)false);
+	array1.remove();	// remove last item in array
+	assertEquals(array1.isEmpty(), (Boolean)true);
+
+
+  There is no assertNotEquals, for whatever reason. I don't know. This is an alternative:
+  		assertFalse(object1.equals(object2));
+		assertFalse(("bob").equals("jane"));
+  
+  		assertTrue(primitivetype1 == primitivetype2);
+  			assertTrue(myThing.getSize() == 12);
+  			assertTrue(myThing.getFirstLetter() == 'a');
+  			assertTrue(size == 12);
+  
+  		assertFalse(primitivetype1 == primitivetype2);
+  			assertFalse(car.getWeight() < 0.0);
+  			assertFalse(car.isTruck());
+  			assertFalse(weight == -234);
+  
+  You can mix them up with methods.
+  		assertTrue(person1.getAge() == person2.getAge());
+		assertEquals( (Integer)person1.getAge(), (Integer)person2.getAge());
+  		person1.birthday();
+  		assertFalse(person1.getAge() == person2.getAge());
+  		person2.birthday();
+  		assertTrue(person1.getAge() == person2.getAge());
+
+
+
+
+  
+  You can test for exceptions you create. Be aware that ONLY ONE exception will happen, so don't test for two at once. 
+  
+
+public class TestMyClass extends TestCase{
+
+	/**
+	 * Create a few instances of your class. Remember, the more thorough your tests, the less likely you are to miss something
+	 */
+
+	private	MyClass thing1;	// terrible name
+	private	MyClass thing2;
+	
+	If your class is going to throw exceptions or handle errors, make some things to test those cases. 
+	private MyClass nullThing;	
+	private MyClass indexOutOfBoundsErrorThing;
+	
+	/**
+	 * Set up
+	 */
+	@Before
+	public void setUp(){
+		// give all the instance variables values
+		thing1 = new MyClass(things);
+		thing2 = new MyClass(things);
+		indexOutOfBoundsErrorThing(things);
+	}
+	
+	@After
+	public void tearDown(){
+		// reassign everything null
+		thing1 = null;
+		thing2 = null;
+		indexOutOfBoundsErrorThing = null;
+	}
+	
+	/**
+	 * Test initialization
+	 */
+	@Test
+	public void testingMyClassSize(){
+		
+		assertTrue(thing1.getSize() == 10);
+		assertTrue(thing2.getSize() == 20);
+
+	}
+
+	@Test
+	public void testingMyClassArray(){
+	
+		assertTrue(thing1.getArrayLimit() == 5);
+		assertTrue(thing1.getArraySize() == 0);
+		
+		assertTrue(thing2.getArrayLimit() == 20);
+		assertTrue(thing2.getArraySize() == 0)
+		
+		assertTrue(indexOutOfBoundsErrorThing.getArraySize() == 0);
+		assertTrue(indexOutOfBoundsErrorThing.getArrayLimit() == 0);
+	}
+
+	@Test
+	public void testingMyClassType(){
+	
+		assertEquals(thing1.getType(), "String");
+		assertEquals(thing2.getType(), "Integer");
+	
+	}
+
+	// Test some methods that change things. If we've gotten this far, we know that the initialization succeeded. 
+	// Normally you'd want to test the initialization and THEN write more.
+	
+	@Test
+	public void changeArraySize(){
+		assertTrue(thing1.isArrayEmpty());	// just to make sure
+		thing1.add("HI");
+		assertFalse(thing1.isArrayEmpty());
+		assertTrue(thing1.getArraySize() == 1);
+		thing1.add("BYE");
+		assertTrue(thing1.getArraySize() == 2);
+		thing1.removeFromFront();
+		assertTrue(thing1.getArraySize() == 1);
+		//etc
+
+	}
+	 
+	@Test
+	public void addToArray(){
+		assertTrue(thing2.isArrayEmpty());
+		thing2.add(11);
+		assertFalse(thing2.isArrayEmpty());
+		assertTrue(thing2.getArraySize() == 1);
+		assertEquals(thing2.getFirstItem(), (Integer)11);
+		assertEquals(thing2.getLastItem(), (Integer)11);
+		assertEquals(thing2.getFirstItem(), thing2.getLastItem());
+		thing2.add(123);
+		assertTrue(thing2.getArraySize() == 2);
+		assertEquals(thing2.getLastItem(), (Integer)123);
+	}
+
+	// To test if our exception would trigger
+	
+	@Test(expected=IndexOutOfBoundsException.class)
+	public void testAddToArrayOfLimit0(){
+		assertTrue(indexOutOfBoundsErrorThing.getArrayLimit() == 0);
+		indexOutOfBoundsErrorThing.add(2.3);		
+	}
+
+	@Test(expected=NullPointerException.class)
+	public void nullPointer(){
+		nullThing.add("sandwich");
+	}
+	 
+}
+

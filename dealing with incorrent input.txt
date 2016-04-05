@@ -1,0 +1,27 @@
+Dealing with incorrect input
+
+There are a few different ways in dealing with incorrect input. Here are a few: fixing it yourself in the code, throwing exceptions, and providing javadoc requirements.
+
+1) Fixing it yourself
+
+	Good for informal context, results that aren't terribly important to be correct, etc. 
+
+	Example: you are making a video game script that takes current damage amount and multiplies it by a provided amount. People who use the mod won't see the requirements, and you don't want a server to crash if they use a wrong amount, so you'll just deal with it. Here, if someone provides input below 0, it's set back to above 0. Changing tihs amount isn't that big of a deal. 
+
+2) Throwing exceptions
+
+	Good for more formal content, when it's necessary to have a program crash instead of giving incorrect results. It's also good for when it would be too convoluted or difficult to fix it manually.
+
+	Example
+
+		public T dequeue(){		// removing an item of type T (whatever type the queue has) from a list called a queue
+			if(isEmpty()){
+				throw new IndexOutOfBoundsException("Queue.dequeue() exception: Cannot dequeue from empty queue");	
+			}
+			return shiftDown();
+		}
+
+3) Javadoc requirements
+
+	Good for formal content, when you're making things that you won't be dealing with errors, things without user input, etc .  
+

@@ -1,0 +1,201 @@
+L.. D.. for SI Fall 2015 CSCI 2120 
+
+A few tips on Intel assembly language programming. These are mostly from memory so forgive any errors!
+
+* Registers
+	Remember to clear out your registers before using them; save any values in variables (mov var, reg) and then clear them out. 
+
+	Example: Let's say you want to do some multiplication. The documentation on assembly says that multiplication is eax * [register] with the result in eax. 
+			mov eax, number1
+			mov ebx, number2
+			mul ebx
+			mov result, eax
+		What happens if your number is small with a bunch of leading zeros but there's already stuff in eax and ebx? Your result might be completely wrong. 
+		Just clear out the registers first:
+			xor eax, eax
+			xor ebx, ebx
+			; multiplication here
+
+* Debugging in Visual Studios
+
+	So your program is crashing, somewhere - it happens. If I remember correctly, using "start with debugging" will show you the point in your code where it's crashing.
+	Now what? Well, you must have done something wrong. 
+	Clear out your registers with xor (save values in them first), move your values to them, check what they are by putting the nop somewhere and placing a breakpoint (red dot you get by clicking the side bar immediately to the left of your code). When you start with debugging again, the program will stop at that point and show you the values of the registers. 
+
+	Example: Let's say that you're dividing by zero accidentally. You know your code is crashing here:
+			mov eax, number1
+			mov ebx, number2
+			div ebx
+
+		But you don't know why. 
+		Check it first:
+
+			xor eax, eax
+			xor ebx, ebx
+			mov eax, number1
+			mov ebx, number2
+			nop		; place breakpoint here
+
+		Now you can see what's happening. 
+		Remember that contents of the registers are in hex! Therefore, 16 isn't going to be decimal 16, but 22. Most of your built-in calculators have a "programming" mode that allows you to switch between decimal and hex. For ASCII characters, look up the numbers that they correspond to.
+
+* Using Windows functions
+
+	First - if you have the Irvine set up, put this at the top of your code:
+		include SmallWin.inc
+	If you need Windows functions but instead try to link libraries that aren't available past Windows XP you'll just give yourself grief. Most of the Windows functions are included in SmallWin. 
+
+	Now - get what you need. Search using the word MSDN included. Example - if you need a file opening function
+		http://lmgtfy.com/?q=MSDN+open+file
+		The first link looks good. https://msdn.microsoft.com/en-us/library/windows/desktop/aa365430%28v=vs.85%29.aspx
+
+	Next, convert it to assembly. This is what the page says: 
+			HFILE WINAPI OpenFile(
+				_In_  LPCSTR     lpFileName,
+				_Out_ LPOFSTRUCT lpReOpenBuff,
+				_In_  UINT       uStyle
+			);
+		What do these mean? LP stands for long pointer. LPCSTR (you'll see this a lot) means Long Pointer to a Constant Terminated String. LPOFSTRUCT, if I had to guess (which I am) would be a Long Pointer Of a Struct (structure in C). So for these, let's use PTR BYTE (byte pointer). What is UINT? I don't know, and if we try to use that type directly it probably won't be recognize and won't compile. General rule is that if you don't know, and/or if the compiler doesn't recognize it, put DWORD. 
+
+		Here's the assembly syntax:
+
+		NameOfFunction PROTO,
+			name:TYPE,
+			name:TYPE,
+			name:TYPE,		
+			name:TYPE
+		
+		Let's try it on OpenFile.
+		
+		OpenFile PROTO,
+			lpFilename:PTR BYTE,
+			lpReOpenBuff:PTR BYTE,
+			uStyle:DWORD
+
+		To make your life easier, put some comments. uStyle, according to the MSDN page, should have some specific values; see which one you want. Say for now, we want to open and read the file and write it too. We'll use OF_READWRITE. This is the style I've always used comments: 
+		
+		; Windows function for opening file.
+		; https://msdn.microsoft.com/en-us/library/windows/desktop/aa365430%28v=vs.85%29.aspx
+		OpenFile PROTO,
+			lpFilename:PTR BYTE,		; byte pointer to the name of the file we want. 
+			lpReOpenBuff:PTR BYTE,		; byte pointer to the buffer we'll read in to. 
+			uStyle:DWORD				; style of reading- use OF_READWRITE
+
+		Now, in your code, to use it. There are two styles, both exactly the same function: invoke and call. You'll probably be required to use call, since it uses teh stack. 
+		
+			invoke FunctionName, arg1, arg2, arg3, arg4
+		
+			invoke OpenFile, filenamePointer, bytenamePointer, OF_READWRITE
+			 
+			push arg4
+			push arg3
+			push arg2
+			push arg1
+			call FunctionName
+
+			push OF_READWRITE
+			push bytenamePointer
+			push filenamePointer
+			call OpenFile
+			
+		Note that in both ways we can directly use OF_READWRITE. 
+
+* Projects
+
+	From memory, there's a bunch of obnoxious hoops you have to jump through to get a new project set up in Visual Studios for every homework assignment. It's actually super simple to use the same one. Make a new asm file. Go to a project you've already set up, and right click on the current file name in the window on the right, and select "exclude from project". Now right click on the project name and select "add existing item", and add your new file. Now when you compile it will compile your current code, and you won't have to make a new project. 
+
+* Tips on final project
+
+	Make sure you are running Visual Studios and everything in a VM! Even if you don't do destructive stuff like messing up the boot entry like I did, you want to be able to undo your changes so you can keep testing. 
+	
+	Take snapshots frequently, you can revert back to them. 
+
+* More examples
+
+	If you look through Irvine's folders, there's a ton of examples for just about everything you need; look through the book for whatever you need, note the chapter it's in, and then look through the folder for that chapter (e.g. file i/o is chapter 11 iirc). 
+
+	Here's a program I wrote in assembly when I took Cryptography, it's a discrete logarithm calculator. This may have some helpful hints in it: http://pastebin.com/p61cyWfH I do use the push and call instead of invoke, I think that's because it would look longer and more impressive, especially for someone who doesn't know assembly. 
+	
+	There's a function in there for square root calculation, which may be helpful if you ever have the grave misfortune of dealing with floating point numbers (floats and doubles) in assembly. Two big points: There are 12 floating point registers in x86, but only the first two registers can be used in arithmetic operations, so you have to move your results and clear the registers constantly for anything. The other is that you need something "small enough" to compare to make a more accurate result. 
+	
+	Here's that part:
+	
+				; now we have to compare the mult total with x
+                ; floating point comparisons are awful in x86,
+                ; so here's a way to get around it
+                ; here, a convoluted way to check equality
+                ; by using a minimum considered value
+                fld d_mult
+                fld d_min
+                fsub d_num              ; subtract large^2 - number
+                fabs                            ; get the absolute value
+                fcomi ST(0),ST(1)       ; compare the two values on the top.
+                je found                        ; if the square root is found, leave
+	
+	Here's the minimum amount declared in my .data section:
+		        
+		        ; the biggest difference that can be had
+				; between our fp result and the original number
+				d_min REAL8 1.0E-17
+	
+	I don't have many examples that aren't probably going to be in your homework for assembly, but here's a little bit from my expanded final project for assembly, with all the relevant stuff deleted. 
+	
+; virus.asm
+; virus program
+; Lindsey Dale & Jonathan Smith
+
+include SmallWin.inc
+includelib WinMM.Lib
+
+;playing a sound
+PlaySoundA PROTO,
+	pszSound:PTR BYTE,
+	hmod:HANDLE,
+	fdwSound:DWORD
+	
+
+.686p
+.mmx
+
+.data 
+
+mBoxCaption BYTE "CSCI 2450 Final Project",0
+mBoxText BYTE "Having some fun with the virus assignment!",0
+soundFile BYTE "smb_over.wav",0
+
+
+.code
+_main proc
+
+
+	;play some mario!
+
+	;invoke PlaySound, OFFSET soundFile, NULL, SND_FILENAME or SND_ASYNC
+	push 1
+	push null
+	push OFFSET soundFile
+	call PlaySoundA
+
+
+	;message box function for maximum annoyance
+	L2:
+		;invoke MessageBoxA, null, OFFSET mBoxText, OFFSET mBoxCaption, MB_OKCANCEL
+		push MB_OKCANCEL
+		push OFFSET mBoxCaption
+		push OFFSET mBoxText
+		push null
+		call MessageBoxA
+		cmp eax, IDOK				
+		je L2						;if user hit okay, jump back and make the messagebox again.  otherwise keep going
+
+
+	exit
+
+_main endp
+
+end _main
+	
+	
+	
+	
+	
